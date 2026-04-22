@@ -15,7 +15,6 @@ Uma Aplicação de Página Única (SPA) para gerenciar e explorar o acervo de um
 - 📋 Rastreador de status de leitura (Lendo / Concluído / Quero ler)
 - 💾 Dados persistidos via localStorage
 - 📱 Design responsivo mobile-first
-- ♿ Acessibilidade com navegação por teclado e ARIA
 
 ## 🛠 Stack Tecnológico
 
