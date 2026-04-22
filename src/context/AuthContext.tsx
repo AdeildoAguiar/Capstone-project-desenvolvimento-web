@@ -1,4 +1,9 @@
 import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import emailjs from '@emailjs/browser';
+
+const EMAILJS_SERVICE_ID  = 'SEU_SERVICE_ID';
+const EMAILJS_TEMPLATE_ID = 'SEU_TEMPLATE_ID';
+const EMAILJS_PUBLIC_KEY  = 'SUA_PUBLIC_KEY';
 
 export interface User {
   id: string;
@@ -38,7 +43,7 @@ interface AuthContextType {
   login: (email: string, password: string) => { ok: boolean; error?: string };
   logout: () => void;
   register: (data: RegisterData) => { ok: boolean; error?: string };
-  sendVerificationCode: (email: string) => string;
+  sendVerificationCode: (email: string) => Promise<string>;
 }
 
 export interface RegisterData {
@@ -78,10 +83,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(USERS_KEY, JSON.stringify(users));
   }
 
-  function sendVerificationCode(email: string): string {
+  async function sendVerificationCode(email: string): Promise<string> {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     sessionStorage.setItem(`verify_${email}`, code);
-    console.log(`[DEV] Verification code for ${email}: ${code}`);
+
+    await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_ID,
+      { to_email: email, code },
+      EMAILJS_PUBLIC_KEY
+    );
+
     return code;
   }
 

@@ -44,13 +44,17 @@ export default function RegisterPage() {
     if (password.length < 6) { setS1Err('A senha deve ter pelo menos 6 caracteres.'); return; }
 
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 700));
-    const code = sendVerificationCode(email);
-    setSentCode(code);
-    setStep('verify');
-    setTimer(60);
-    setLoading(false);
-    setTimeout(() => inputRefs.current[0]?.focus(), 100);
+    try {
+      const code = await sendVerificationCode(email);
+      setSentCode(code);
+      setStep('verify');
+      setTimer(60);
+      setTimeout(() => inputRefs.current[0]?.focus(), 100);
+    } catch {
+      setS1Err('Erro ao enviar o e-mail. Verifique o endereco e tente novamente.');
+    } finally {
+      setLoading(false);
+    }
   }
   function handleDigit(index: number, value: string) {
     const digit = value.replace(/\D/g, '').slice(-1);
@@ -108,13 +112,20 @@ export default function RegisterPage() {
     setTimeout(() => navigate('/'), 2200);
   }
 
-  function handleResend() {
-    const code = sendVerificationCode(email);
-    setSentCode(code);
-    setTimer(60);
-    setDigits(['', '', '', '', '', '']);
-    setCodeErr(false);
-    setTimeout(() => inputRefs.current[0]?.focus(), 50);
+  async function handleResend() {
+    setLoading(true);
+    try {
+      const code = await sendVerificationCode(email);
+      setSentCode(code);
+      setTimer(60);
+      setDigits(['', '', '', '', '', '']);
+      setCodeErr(false);
+      setTimeout(() => inputRefs.current[0]?.focus(), 50);
+    } catch {
+      setCodeErr(false);
+    } finally {
+      setLoading(false);
+    }
   }
   const steps = [
     { key: 'info',   label: 'Dados' },
@@ -307,11 +318,10 @@ export default function RegisterPage() {
                 Insira o código de 6 dígitos enviado para <strong>{email}</strong>
               </p>
 
-              {}
               <div className="verify-info">
-                <strong>📨 E-mail enviado!</strong> Em um sistema real, o código
-                chegaria na sua caixa de entrada. Para este demo, o código é:
-                <div className="verify-code-reveal">{sentCode}</div>
+                <strong>E-mail enviado!</strong> Verifique sua caixa de entrada em{' '}
+                <strong>{email}</strong> e insira o codigo de 6 digitos abaixo.
+                Caso nao encontre, verifique a pasta de spam.
               </div>
 
               <form onSubmit={handleVerify} noValidate>
