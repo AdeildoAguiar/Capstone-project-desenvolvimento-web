@@ -16,8 +16,6 @@ export function useToast() {
   const show = useCallback((icon: string, text: string) => {
     const id = nextId++;
     setToasts((prev) => [...prev, { id, icon, text }]);
-
-    // Start fade-out after 2.6s, remove after 3s
     const fadeTimer = setTimeout(() => {
       setToasts((prev) =>
         prev.map((t) => (t.id === id ? { ...t, fading: true } : t))

@@ -1,8 +1,6 @@
 import { createContext, useContext, useEffect, useReducer, ReactNode } from 'react';
 import { AppState, Book, LoanRecord, ReadingStatus } from '../types';
 
-// ─── State & Actions ─────────────────────────────────────────────────────────
-
 const STORAGE_KEY = 'biblio_jala_state';
 
 const initialState: AppState = {
@@ -53,8 +51,6 @@ function reducer(state: AppState, action: Action): AppState {
   }
 }
 
-// ─── Context ─────────────────────────────────────────────────────────────────
-
 interface LibraryContextType {
   state: AppState;
   borrowBook: (loan: Omit<LoanRecord, 'returned'>) => void;
@@ -78,8 +74,6 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
       return init;
     }
   });
-
-  // Persist to localStorage on every state change
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);

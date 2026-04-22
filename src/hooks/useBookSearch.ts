@@ -23,8 +23,6 @@ export function useBookSearch() {
   const search = useCallback(
     async (query: string, subject?: string, sort?: string, page = 1) => {
       if (!query.trim() && !subject) return;
-
-      // Cancel previous request
       abortRef.current?.abort();
       abortRef.current = new AbortController();
 

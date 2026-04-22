@@ -32,7 +32,6 @@ export default function HomePage() {
   useEffect(() => {
     const q = DEFAULT_QUERIES[Math.floor(Math.random() * DEFAULT_QUERIES.length)];
     search(q, '', 'rating');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function handleSearch(e: React.FormEvent) {
@@ -42,7 +41,6 @@ export default function HomePage() {
 
   function handleSubjectChange(e: React.ChangeEvent<HTMLSelectElement>) {
     setSubject(e.target.value);
-    // Auto-search when subject changes
     const newSubject = e.target.value;
     search(query.trim() || 'books', newSubject, sort);
   }

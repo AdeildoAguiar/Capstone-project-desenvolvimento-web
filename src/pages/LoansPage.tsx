@@ -40,7 +40,7 @@ export default function LoansPage() {
           <p className="page-header__subtitle">Gerencie seus livros emprestados e histórico.</p>
         </header>
 
-        {/* Stats row */}
+        {}
         <div className="loans-stats">
           <div className="stat-card">
             <span className="stat-card__value">{active.length}</span>
@@ -56,7 +56,7 @@ export default function LoansPage() {
           </div>
         </div>
 
-        {/* Active loans */}
+        {}
         <h2 className="section-heading">Empréstimos ativos</h2>
 
         {active.length === 0 ? (
@@ -123,7 +123,7 @@ export default function LoansPage() {
           </div>
         )}
 
-        {/* History */}
+        {}
         {history.length > 0 && (
           <>
             <h2 className="section-heading" style={{ color: 'var(--ink-3)' }}>Histórico de devoluções</h2>

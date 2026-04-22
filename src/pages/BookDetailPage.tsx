@@ -23,8 +23,6 @@ export default function BookDetailPage() {
     setReadingStatus, isOnLoan, isOnWishlist, activeLoan, state,
   } = useLibrary();
   const { toasts, show } = useToast();
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [detail, setDetail] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -141,7 +139,7 @@ export default function BookDetailPage() {
         </button>
 
         <div className="detail-layout">
-          {/* Cover column */}
+          {}
           <div className="detail-cover-col">
             <div className="detail-cover">
               {detail?.covers?.[0] ? (
@@ -190,7 +188,7 @@ export default function BookDetailPage() {
             </div>
           </div>
 
-          {/* Info column */}
+          {}
           <div className="detail-info">
             <div>
               <p className="detail-eyebrow">Biblioteca Universitária · Detalhes</p>
@@ -199,7 +197,6 @@ export default function BookDetailPage() {
                 <p className="detail-author">
                   por{' '}
                   {detail.authors
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .map((a: any) => a.author?.key ?? '')
                     .filter(Boolean)
                     .join(', ')}
@@ -207,7 +204,7 @@ export default function BookDetailPage() {
               )}
             </div>
 
-            {/* Status badges */}
+            {}
             <div className="detail-status-row">
               {onLoan
                 ? <span className="badge badge--loaned">📤 Emprestado</span>
@@ -219,7 +216,7 @@ export default function BookDetailPage() {
               {currentStatus === 'wishlist'  && <span className="badge badge--neutral">📝 Quero ler</span>}
             </div>
 
-            {/* Loan info */}
+            {}
             {loan && (
               <div className="detail-loan-card">
                 <span style={{ fontSize: '1.2rem' }}>📅</span>
@@ -239,7 +236,7 @@ export default function BookDetailPage() {
 
             <div className="detail-divider" />
 
-            {/* Description */}
+            {}
             <div>
               <p className="detail-section-label">Descrição</p>
               <p className="detail-description">
@@ -247,7 +244,7 @@ export default function BookDetailPage() {
               </p>
             </div>
 
-            {/* Subjects */}
+            {}
             {subjects.length > 0 && (
               <div>
                 <p className="detail-section-label">Categorias</p>
