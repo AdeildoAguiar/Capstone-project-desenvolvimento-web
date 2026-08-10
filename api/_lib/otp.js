@@ -85,15 +85,16 @@ export function verifyToken(token, email, code) {
 }
 
 /**
- * Sends the code by e-mail through the Resend REST API.
- * Returns { sent: true } on success, or { sent: false, reason } when no
- * API key is configured (demo mode) or the provider fails.
+ * Envia o código por e-mail. O provedor é escolhido pela variável de
+ * ambiente presente (nesta ordem):
+ *   - BREVO_API_KEY  → Brevo (NÃO precisa de domínio; só remetente verificado)
+ *   - RESEND_API_KEY → Resend (precisa de domínio verificado p/ enviar a terceiros)
+ *   - nenhuma        → modo demonstração (código aparece na tela)
+ * Retorna { sent: true } ou { sent: false, reason }.
  */
 export async function sendCodeEmail(email, code, purpose) {
-  const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || 'BiblioJala <onboarding@resend.dev>';
-
-  if (!apiKey) return { sent: false, reason: 'no-api-key' };
+  const { name: fromName, email: fromEmail } = parseFrom(from);
 
   const title =
     purpose === 'register' ? 'Confirme seu e-mail' : 'Verificação de acesso';
@@ -101,7 +102,52 @@ export async function sendCodeEmail(email, code, purpose) {
     purpose === 'register'
       ? 'Bem-vindo(a) à BiblioJala! Falta só um passo para ativar a sua conta. Use o código abaixo para confirmar o seu e-mail:'
       : 'Recebemos um pedido de acesso à sua conta BiblioJala. Use o código abaixo para concluir o seu login em duas etapas:';
+  const subject = `${code} é o seu código de verificação — BiblioJala`;
+  const html = emailTemplate(code, title, intro);
 
+  if (process.env.BREVO_API_KEY) {
+    return sendViaBrevo({ apiKey: process.env.BREVO_API_KEY, fromName, fromEmail, to: email, subject, html });
+  }
+  if (process.env.RESEND_API_KEY) {
+    return sendViaResend({ apiKey: process.env.RESEND_API_KEY, from, to: email, subject, html });
+  }
+  return { sent: false, reason: 'no-api-key' };
+}
+
+/** Divide "Nome <email@dominio>" em { name, email }. */
+function parseFrom(from) {
+  const m = /^\s*(.*?)\s*<([^>]+)>\s*$/.exec(from);
+  if (m) return { name: m[1] || 'BiblioJala', email: m[2].trim() };
+  return { name: 'BiblioJala', email: from.trim() };
+}
+
+async function sendViaBrevo({ apiKey, fromName, fromEmail, to, subject, html }) {
+  try {
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+      body: JSON.stringify({
+        sender: { name: fromName, email: fromEmail },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+      }),
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      return { sent: false, reason: `brevo-${res.status}`, detail };
+    }
+    return { sent: true };
+  } catch (err) {
+    return { sent: false, reason: 'network', detail: String(err) };
+  }
+}
+
+async function sendViaResend({ apiKey, from, to, subject, html }) {
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -109,12 +155,7 @@ export async function sendCodeEmail(email, code, purpose) {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from,
-        to: [email],
-        subject: `${code} é o seu código de verificação — BiblioJala`,
-        html: emailTemplate(code, title, intro),
-      }),
+      body: JSON.stringify({ from, to: [to], subject, html }),
     });
     if (!res.ok) {
       const detail = await res.text().catch(() => '');
