@@ -96,7 +96,11 @@ export async function sendCodeEmail(email, code, purpose) {
   if (!apiKey) return { sent: false, reason: 'no-api-key' };
 
   const title =
-    purpose === 'register' ? 'Confirme seu e-mail' : 'Seu código de acesso';
+    purpose === 'register' ? 'Confirme seu e-mail' : 'Verificação de acesso';
+  const intro =
+    purpose === 'register'
+      ? 'Bem-vindo(a) à BiblioJala! Falta só um passo para ativar a sua conta. Use o código abaixo para confirmar o seu e-mail:'
+      : 'Recebemos um pedido de acesso à sua conta BiblioJala. Use o código abaixo para concluir o seu login em duas etapas:';
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -108,8 +112,8 @@ export async function sendCodeEmail(email, code, purpose) {
       body: JSON.stringify({
         from,
         to: [email],
-        subject: `${code} é o seu código BiblioJala`,
-        html: emailTemplate(code, title),
+        subject: `${code} é o seu código de verificação — BiblioJala`,
+        html: emailTemplate(code, title, intro),
       }),
     });
     if (!res.ok) {
@@ -122,27 +126,50 @@ export async function sendCodeEmail(email, code, purpose) {
   }
 }
 
-function emailTemplate(code, title) {
+function emailTemplate(code, title, intro) {
+  const year = new Date().getFullYear();
   return `<!doctype html>
-<html lang="pt-BR"><body style="margin:0;background:#f5f2ee;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;padding:32px 16px;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:460px;margin:0 auto;background:#fdfaf6;border:1px solid #e0dbd3;border-radius:20px;overflow:hidden;">
-    <tr><td style="background:#1a1714;padding:28px 32px;">
-      <span style="color:#f5f2ee;font-size:20px;font-weight:700;letter-spacing:-.01em;">📚 BiblioJala</span>
+<html lang="pt-BR"><body style="margin:0;background:#f4f0e8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;padding:32px 16px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;margin:0 auto;background:#fffdf8;border:1px solid #ddd5c6;border-radius:22px;overflow:hidden;box-shadow:0 6px 18px rgba(60,42,20,.08);">
+    <!-- Cabeçalho com marca (sem emoji) -->
+    <tr><td style="background:linear-gradient(135deg,#e6a94f 0%,#c8893a 52%,#9c5f1c 100%);padding:26px 32px;">
+      <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+        <td style="width:38px;height:38px;background:rgba(255,255,255,.92);border-radius:11px;text-align:center;vertical-align:middle;">
+          <span style="font-size:19px;font-weight:800;color:#9c5f1c;line-height:38px;">B</span>
+        </td>
+        <td style="padding-left:12px;color:#fff8ee;font-size:20px;font-weight:700;letter-spacing:-.01em;">BiblioJala</td>
+      </tr></table>
     </td></tr>
-    <tr><td style="padding:36px 32px 32px;">
-      <h1 style="margin:0 0 8px;font-size:22px;color:#1a1714;">${title}</h1>
-      <p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#4a4540;">
-        Use o código abaixo para continuar. Ele expira em <strong>10 minutos</strong> e só funciona uma vez.
-      </p>
-      <div style="text-align:center;margin:0 0 24px;">
-        <span style="display:inline-block;font-size:34px;font-weight:800;letter-spacing:.35em;color:#a06c28;background:#f5e6cc;border:1px solid rgba(200,137,58,.35);border-radius:14px;padding:16px 24px 16px 34px;">${code}</span>
+
+    <!-- Corpo -->
+    <tr><td style="padding:36px 32px 8px;">
+      <h1 style="margin:0 0 10px;font-size:22px;color:#201b15;">${title}</h1>
+      <p style="margin:0 0 26px;font-size:14px;line-height:1.7;color:#5a5147;">${intro}</p>
+
+      <div style="text-align:center;margin:0 0 14px;">
+        <span style="display:inline-block;font-size:36px;font-weight:800;letter-spacing:.35em;color:#97591b;background:#f6e7cc;border:1px solid rgba(200,137,58,.35);border-radius:16px;padding:18px 26px 18px 36px;">${code}</span>
       </div>
-      <p style="margin:0;font-size:12px;line-height:1.6;color:#8a857e;">
-        Se você não solicitou este código, ignore este e-mail — sua conta continua segura.
+      <p style="margin:0 0 26px;text-align:center;font-size:12px;color:#938a7d;">
+        Este código expira em <strong style="color:#5a5147;">10 minutos</strong> e só pode ser usado uma vez.
       </p>
+
+      <!-- Aviso de segurança -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f0e8;border-radius:12px;">
+        <tr><td style="padding:14px 16px;font-size:12px;line-height:1.6;color:#5a5147;">
+          <strong style="color:#201b15;">Dica de segurança:</strong> a BiblioJala nunca vai pedir esse código
+          por telefone, WhatsApp ou e-mail. Se não foi você que solicitou, apenas ignore esta mensagem —
+          a sua conta continua protegida.
+        </td></tr>
+      </table>
     </td></tr>
-    <tr><td style="padding:18px 32px;border-top:1px solid #e0dbd3;">
-      <p style="margin:0;font-size:11px;color:#8a857e;">Universidade Jala · Biblioteca Digital</p>
+
+    <!-- Rodapé -->
+    <tr><td style="padding:20px 32px;border-top:1px solid #ddd5c6;">
+      <p style="margin:0;font-size:11px;color:#938a7d;line-height:1.6;">
+        Universidade Jala · Biblioteca Digital<br>
+        Este é um e-mail automático — por favor, não responda.<br>
+        © ${year} BiblioJala. Todos os direitos reservados.
+      </p>
     </td></tr>
   </table>
 </body></html>`;
