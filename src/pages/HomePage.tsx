@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useBookSearch } from '../hooks/useBookSearch';
 import BookCard, { BookCardSkeleton } from '../components/BookCard';
+import Icon from '../components/Icon';
 
 const SUBJECTS = [
   { value: '', label: 'Todos os gêneros' },
@@ -53,18 +54,35 @@ export default function HomePage() {
   return (
     <main>
       <div className="container">
-        <header className="page-header">
-          <p className="page-header__eyebrow">Universidade Jala · Acervo Digital</p>
-          <h1 className="page-header__title">Catálogo de Livros</h1>
-          <p className="page-header__subtitle">
-            Explore, empreste e acompanhe suas leituras em um só lugar.
-          </p>
-        </header>
+        <section className="hero">
+          <div className="hero__inner">
+            <span className="hero__eyebrow">
+              <Icon name="book-open" size={15} /> Universidade Jala · Acervo Digital
+            </span>
+            <h1 className="hero__title">
+              Milhares de histórias,<br /><em>uma única estante.</em>
+            </h1>
+            <p className="hero__desc">
+              Explore o catálogo completo, empreste com um clique e acompanhe suas
+              leituras — tudo em um só lugar, no claro ou no escuro.
+            </p>
+            <div className="hero__stats">
+              <div className="hero__stat"><b>+20M</b><span>títulos no acervo</span></div>
+              <div className="hero__stat"><b>14 dias</b><span>prazo de empréstimo</span></div>
+              <div className="hero__stat"><b>2FA</b><span>login por e-mail</span></div>
+            </div>
+          </div>
+          <div className="hero__art" aria-hidden="true">
+            <div className="hero__book" />
+            <div className="hero__book" />
+            <div className="hero__book" />
+          </div>
+        </section>
 
         <div className="search-wrap">
           <form className="search-form" onSubmit={handleSearch} role="search">
             <div className="search-input-wrap">
-              <span className="search-icon" aria-hidden="true">🔍</span>
+              <span className="search-icon"><Icon name="search" /></span>
               <input
                 ref={inputRef}
                 type="search"
@@ -100,14 +118,14 @@ export default function HomePage() {
             </select>
 
             <button type="submit" className="search-btn" aria-label="Buscar">
-              Buscar
+              <Icon name="search" /> Buscar
             </button>
           </form>
         </div>
 
         {error && (
           <div className="error-alert" role="alert">
-            <span>⚠️</span>
+            <Icon name="alert" />
             {error}
           </div>
         )}
@@ -126,7 +144,7 @@ export default function HomePage() {
           </div>
         ) : books.length === 0 && !error ? (
           <div className="empty-state">
-            <div className="empty-state__icon">📭</div>
+            <div className="empty-state__icon"><Icon name="inbox" size={34} /></div>
             <h2 className="empty-state__title">Nenhum livro encontrado</h2>
             <p className="empty-state__text">
               Tente outros termos de busca ou explore categorias diferentes.

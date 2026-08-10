@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLibrary } from '../context/LibraryContext';
-import { coverUrl, fetchBookDetail } from '../hooks/useBookSearch';
+import { coverUrl, fetchBookDetail, fetchAuthorName } from '../hooks/useBookSearch';
 import { Book, ReadingStatus } from '../types';
 import { useToast, ToastContainer } from '../components/Toast';
+import Icon from '../components/Icon';
 
 function addDays(days: number): string {
   const d = new Date();
@@ -24,6 +25,7 @@ export default function BookDetailPage() {
   } = useLibrary();
   const { toasts, show } = useToast();
   const [detail, setDetail] = useState<any>(null);
+  const [authorName, setAuthorName] = useState('Autor desconhecido');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -38,8 +40,13 @@ export default function BookDetailPage() {
     if (!workKey) return;
     setLoading(true);
     setError('');
+    setAuthorName('Autor desconhecido');
     fetchBookDetail(workKey)
-      .then(setDetail)
+      .then((d) => {
+        setDetail(d);
+        const key = d?.authors?.[0]?.author?.key;
+        if (key) fetchAuthorName(key).then((n) => n && setAuthorName(n));
+      })
       .catch(() => setError('Não foi possível carregar os detalhes deste livro.'))
       .finally(() => setLoading(false));
   }, [workKey]);
@@ -54,27 +61,28 @@ export default function BookDetailPage() {
     borrowBook({
       bookKey: workKey,
       bookTitle: detail.title,
-      bookAuthor: 'Biblioteca Jala',
+      bookAuthor: authorName,
+      subject: detail.subjects?.[0],
       coverI: detail.covers?.[0],
       loanDate: new Date().toISOString(),
       dueDate: addDays(14),
     });
     if (!onWish) addWishlist(book);
-    show('✅', 'Livro emprestado! Devolução em 14 dias.');
+    show('check-circle', 'Livro emprestado! Devolução em 14 dias.');
   }
 
   function handleReturn() {
     returnBook(workKey);
-    show('📦', 'Livro devolvido com sucesso!');
+    show('return', 'Livro devolvido com sucesso!');
   }
 
   function handleWishlist() {
     if (onWish) {
       removeWishlist(workKey);
-      show('🗑', 'Removido da lista de desejos.');
+      show('trash', 'Removido da lista de desejos.');
     } else {
       addWishlist({ key: workKey, title: detail?.title ?? 'Livro', cover_i: detail?.covers?.[0] });
-      show('⭐', 'Adicionado à lista de desejos!');
+      show('star', 'Adicionado à lista de desejos!');
     }
   }
 
@@ -82,11 +90,11 @@ export default function BookDetailPage() {
     const s = e.target.value as ReadingStatus;
     setReadingStatus(workKey, s);
     const labels: Record<string, string> = {
-      reading: 'Status: Lendo 📖',
-      completed: 'Status: Concluído ✅',
-      wishlist: 'Status: Quero ler 📝',
+      reading: 'Status: Lendo',
+      completed: 'Status: Concluído',
+      wishlist: 'Status: Quero ler',
     };
-    show('✏️', labels[s ?? ''] ?? 'Status atualizado');
+    show('edit', labels[s ?? ''] ?? 'Status atualizado');
   }
 
   const description =
@@ -104,7 +112,7 @@ export default function BookDetailPage() {
     return (
       <main>
         <div className="container detail-page">
-          <button className="detail-back" onClick={() => navigate(-1)}>← Voltar</button>
+          <button className="detail-back" onClick={() => navigate(-1)}><Icon name="arrow-left" /> Voltar</button>
           <div className="detail-layout">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '.85rem' }}>
               <div className="skeleton-cover" style={{ aspectRatio: '2/3', borderRadius: 'var(--radius-lg)', animation: 'shimmer 1.4s ease infinite', background: 'linear-gradient(90deg,var(--cream-2) 25%,var(--cream-3) 50%,var(--cream-2) 75%)', backgroundSize: '600px 100%' }} />
@@ -124,8 +132,8 @@ export default function BookDetailPage() {
     return (
       <main>
         <div className="container detail-page">
-          <div className="error-alert">⚠️ {error}</div>
-          <button className="btn btn--ghost" onClick={() => navigate(-1)}>← Voltar ao catálogo</button>
+          <div className="error-alert"><Icon name="alert" /> {error}</div>
+          <button className="btn btn--ghost" onClick={() => navigate(-1)}><Icon name="arrow-left" /> Voltar ao catálogo</button>
         </div>
       </main>
     );
@@ -135,7 +143,7 @@ export default function BookDetailPage() {
     <main>
       <div className="container detail-page">
         <button className="detail-back" onClick={() => navigate(-1)} aria-label="Voltar">
-          ← Voltar ao catálogo
+          <Icon name="arrow-left" /> Voltar ao catálogo
         </button>
 
         <div className="detail-layout">
@@ -146,7 +154,7 @@ export default function BookDetailPage() {
                 <img src={coverUrl(detail.covers[0], 'L')} alt={`Capa de ${detail?.title}`} />
               ) : (
                 <div className="detail-cover-placeholder">
-                  <span>📖</span>
+                  <Icon name="book" size={56} />
                 </div>
               )}
             </div>
@@ -154,11 +162,11 @@ export default function BookDetailPage() {
             <div className="detail-col-actions">
               {onLoan ? (
                 <button className="btn btn--danger" onClick={handleReturn} style={{ width: '100%' }}>
-                  📦 Devolver Livro
+                  <Icon name="return" /> Devolver Livro
                 </button>
               ) : (
                 <button className="btn btn--primary" onClick={handleBorrow} style={{ width: '100%' }}>
-                  📤 Emprestar (14 dias)
+                  <Icon name="upload" /> Emprestar (14 dias)
                 </button>
               )}
 
@@ -168,7 +176,7 @@ export default function BookDetailPage() {
                 style={{ width: '100%' }}
                 aria-pressed={onWish}
               >
-                {onWish ? '✕ Remover da lista' : '⭐ Lista de desejos'}
+                <Icon name={onWish ? 'x' : 'star'} /> {onWish ? 'Remover da lista' : 'Lista de desejos'}
               </button>
 
               <div>
@@ -180,9 +188,9 @@ export default function BookDetailPage() {
                   aria-label="Selecionar status de leitura"
                 >
                   <option value="">— Selecionar —</option>
-                  <option value="reading">📖 Lendo</option>
-                  <option value="completed">✅ Concluído</option>
-                  <option value="wishlist">📝 Quero ler</option>
+                  <option value="reading">Lendo</option>
+                  <option value="completed">Concluído</option>
+                  <option value="wishlist">Quero ler</option>
                 </select>
               </div>
             </div>
@@ -191,42 +199,36 @@ export default function BookDetailPage() {
           {}
           <div className="detail-info">
             <div>
-              <p className="detail-eyebrow">Biblioteca Universitária · Detalhes</p>
+              <p className="detail-eyebrow"><Icon name="book-open" size={15} /> Biblioteca Universitária · Detalhes</p>
               <h1 className="detail-title">{detail?.title}</h1>
               {detail?.authors && (
-                <p className="detail-author">
-                  por{' '}
-                  {detail.authors
-                    .map((a: any) => a.author?.key ?? '')
-                    .filter(Boolean)
-                    .join(', ')}
-                </p>
+                <p className="detail-author">por {authorName}</p>
               )}
             </div>
 
             {}
             <div className="detail-status-row">
               {onLoan
-                ? <span className="badge badge--loaned">📤 Emprestado</span>
-                : <span className="badge badge--available">✅ Disponível</span>
+                ? <span className="badge badge--loaned"><Icon name="upload" /> Emprestado</span>
+                : <span className="badge badge--available"><Icon name="check" /> Disponível</span>
               }
-              {onWish && <span className="badge badge--wishlist">⭐ Lista de desejos</span>}
-              {currentStatus === 'reading'   && <span className="badge badge--reading">📖 Lendo</span>}
-              {currentStatus === 'completed' && <span className="badge badge--available">✔ Concluído</span>}
-              {currentStatus === 'wishlist'  && <span className="badge badge--neutral">📝 Quero ler</span>}
+              {onWish && <span className="badge badge--wishlist"><Icon name="star-fill" /> Lista de desejos</span>}
+              {currentStatus === 'reading'   && <span className="badge badge--reading"><Icon name="book-open" /> Lendo</span>}
+              {currentStatus === 'completed' && <span className="badge badge--available"><Icon name="check-circle" /> Concluído</span>}
+              {currentStatus === 'wishlist'  && <span className="badge badge--neutral"><Icon name="edit" /> Quero ler</span>}
             </div>
 
             {}
             {loan && (
               <div className="detail-loan-card">
-                <span style={{ fontSize: '1.2rem' }}>📅</span>
+                <Icon name="calendar" size={22} />
                 <div>
                   <p>
                     Emprestado em <strong>{formatDate(loan.loanDate)}</strong>
                   </p>
                   <p style={{ marginTop: '.2rem' }}>
                     {daysUntilDue !== null && daysUntilDue < 0
-                      ? <><strong style={{ color: 'var(--red)' }}>⚠️ Atrasado!</strong> Devolver imediatamente.</>
+                      ? <><strong style={{ color: 'var(--red)' }}>Atrasado!</strong> Devolver imediatamente.</>
                       : <>Devolver até <strong>{formatDate(loan.dueDate)}</strong>{daysUntilDue !== null ? ` (${daysUntilDue} dia${daysUntilDue !== 1 ? 's' : ''})` : ''}</>
                     }
                   </p>

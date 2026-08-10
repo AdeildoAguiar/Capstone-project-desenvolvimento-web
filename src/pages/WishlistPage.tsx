@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLibrary } from '../context/LibraryContext';
 import { coverUrl } from '../hooks/useBookSearch';
 import { useToast, ToastContainer } from '../components/Toast';
+import Icon from '../components/Icon';
 
 export default function WishlistPage() {
   const { state, removeWishlist } = useLibrary();
@@ -11,7 +12,7 @@ export default function WishlistPage() {
 
   function handleRemove(bookKey: string, title: string) {
     removeWishlist(bookKey);
-    show('🗑', `"${title.slice(0, 30)}" removido da lista.`);
+    show('trash', `"${title.slice(0, 30)}" removido da lista.`);
   }
 
   return (
@@ -29,7 +30,7 @@ export default function WishlistPage() {
 
         {wishlist.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state__icon">⭐</div>
+            <div className="empty-state__icon"><Icon name="star" size={34} /></div>
             <h2 className="empty-state__title">Lista de desejos vazia</h2>
             <p className="empty-state__text">
               Encontre livros no catálogo e clique em "Lista de desejos" para salvá-los aqui.
@@ -57,10 +58,10 @@ export default function WishlistPage() {
                   {book.cover_i ? (
                     <img src={coverUrl(book.cover_i, 'M')} alt="" loading="lazy" decoding="async" />
                   ) : (
-                    <div className="wishlist-card__placeholder">📖</div>
+                    <div className="wishlist-card__placeholder"><Icon name="book" size={40} /></div>
                   )}
                   <div className="wishlist-card__overlay">
-                    <span className="wishlist-card__overlay-label">Ver detalhes →</span>
+                    <span className="wishlist-card__overlay-label">Ver detalhes <Icon name="arrow-right" /></span>
                   </div>
                 </div>
 
@@ -88,7 +89,7 @@ export default function WishlistPage() {
                       aria-label={`Remover ${book.title} da lista de desejos`}
                       title="Remover da lista"
                     >
-                      ✕
+                      <Icon name="trash" size={16} />
                     </button>
                   </div>
                 </div>

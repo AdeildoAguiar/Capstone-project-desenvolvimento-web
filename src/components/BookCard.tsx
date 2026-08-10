@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Book } from '../types';
 import { coverUrl } from '../hooks/useBookSearch';
 import { useLibrary } from '../context/LibraryContext';
+import Icon, { IconName } from './Icon';
 
 interface Props { book: Book; }
 
@@ -36,6 +37,7 @@ export default function BookCard({ book }: Props) {
     ? 'book-card__status-dot book-card__status-dot--wishlist'
     : 'book-card__status-dot book-card__status-dot--available';
 
+  const statusIcon: IconName = onLoan ? 'upload' : onWish ? 'star-fill' : 'check';
   const statusLabel = onLoan ? 'Emprestado' : onWish ? 'Na lista de desejos' : 'Disponível';
 
   return (
@@ -57,11 +59,13 @@ export default function BookCard({ book }: Props) {
           />
         ) : (
           <div className="book-card__cover-placeholder">
-            <span>📖</span>
+            <Icon name="book" size={38} />
             <p>sem capa</p>
           </div>
         )}
-        <div className={dotClass} title={statusLabel} aria-hidden="true" />
+        <div className={dotClass} title={statusLabel}>
+          <Icon name={statusIcon} size={13} />
+        </div>
       </div>
 
       <div className="book-card__body">

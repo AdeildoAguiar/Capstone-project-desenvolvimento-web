@@ -1,4 +1,15 @@
 import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import { UserRole } from '../types';
+import { hashPassword, verifyPassword, isLegacyPlaintext } from '../lib/crypto';
+import {
+  StoredUser,
+  Address,
+  getUsers,
+  saveUsers,
+  findUser,
+  upsertUser,
+  roleFor,
+} from '../lib/users';
 
 export interface User {
   id: string;
@@ -6,6 +17,15 @@ export interface User {
   email: string;
   phone: string;
   createdAt: string;
+  role: UserRole;
+  address?: Address;
+}
+
+/** Fields a user is allowed to edit on their own profile. */
+export interface ProfileUpdate {
+  name?: string;
+  phone?: string;
+  address?: Address;
 }
 
 interface AuthState {
@@ -16,29 +36,33 @@ interface AuthState {
 type Action =
   | { type: 'LOGIN'; payload: User }
   | { type: 'LOGOUT' }
-  | { type: 'REGISTER'; payload: User };
+  | { type: 'UPDATE_USER'; payload: User };
 
 const STORAGE_KEY = 'biblio_auth';
-const USERS_KEY   = 'biblio_users';
+
+function toPublic(u: StoredUser): User {
+  return {
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    phone: u.phone,
+    createdAt: u.createdAt,
+    role: roleFor(u.email),
+    address: u.address,
+  };
+}
 
 function reducer(state: AuthState, action: Action): AuthState {
   switch (action.type) {
     case 'LOGIN':
-    case 'REGISTER':
       return { user: action.payload, isAuthenticated: true };
+    case 'UPDATE_USER':
+      return { ...state, user: action.payload };
     case 'LOGOUT':
       return { user: null, isAuthenticated: false };
     default:
       return state;
   }
-}
-
-interface AuthContextType {
-  state: AuthState;
-  login: (email: string, password: string) => { ok: boolean; error?: string };
-  logout: () => void;
-  register: (data: RegisterData) => { ok: boolean; error?: string };
-  sendVerificationCode: (email: string) => string;
 }
 
 export interface RegisterData {
@@ -48,59 +72,70 @@ export interface RegisterData {
   password: string;
 }
 
-interface StoredUser extends User {
-  password: string;
+interface AuthContextType {
+  state: AuthState;
+  /** Step 1 of login: validate credentials before the e-mail code is sent. */
+  checkCredentials: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  /** Step 2 of login: called after the e-mail code is verified. */
+  finishLogin: (email: string) => { ok: boolean; error?: string };
+  /** Creates the account (call only after the e-mail code is verified). */
+  register: (data: RegisterData) => Promise<{ ok: boolean; error?: string }>;
+  emailExists: (email: string) => boolean;
+  updateProfile: (data: ProfileUpdate) => { ok: boolean; error?: string };
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, { user: null, isAuthenticated: false }, () => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : { user: null, isAuthenticated: false };
-    } catch {
-      return { user: null, isAuthenticated: false };
+  const [state, dispatch] = useReducer(
+    reducer,
+    { user: null, isAuthenticated: false },
+    () => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        return stored ? JSON.parse(stored) : { user: null, isAuthenticated: false };
+      } catch {
+        return { user: null, isAuthenticated: false };
+      }
     }
-  });
+  );
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
 
-  function getUsers(): StoredUser[] {
-    try {
-      return JSON.parse(localStorage.getItem(USERS_KEY) ?? '[]');
-    } catch { return []; }
+  async function checkCredentials(email: string, password: string) {
+    const found = findUser(email);
+    if (!found) return { ok: false, error: 'E-mail não cadastrado.' };
+
+    // Transparently upgrade any legacy plaintext password on first login.
+    if (isLegacyPlaintext(found.passwordHash)) {
+      if (found.passwordHash !== password) {
+        return { ok: false, error: 'E-mail ou senha incorretos.' };
+      }
+      upsertUser({ ...found, passwordHash: await hashPassword(password) });
+      return { ok: true };
+    }
+
+    const ok = await verifyPassword(password, found.passwordHash);
+    return ok
+      ? { ok: true }
+      : { ok: false, error: 'E-mail ou senha incorretos.' };
   }
 
-  function saveUsers(users: StoredUser[]) {
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-  }
-
-  function sendVerificationCode(email: string): string {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    sessionStorage.setItem(`verify_${email}`, code);
-    console.log(`[DEV] Verification code for ${email}: ${code}`);
-    return code;
-  }
-
-  function login(email: string, password: string) {
-    const users = getUsers();
-    const found = users.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-    );
-    if (!found) return { ok: false, error: 'E-mail ou senha incorretos.' };
-    const { password: _pw, ...user } = found;
-    dispatch({ type: 'LOGIN', payload: user });
+  function finishLogin(email: string) {
+    const found = findUser(email);
+    if (!found) return { ok: false, error: 'Conta não encontrada.' };
+    dispatch({ type: 'LOGIN', payload: toPublic(found) });
     return { ok: true };
   }
 
-  function logout() {
-    dispatch({ type: 'LOGOUT' });
+  function emailExists(email: string) {
+    return Boolean(findUser(email));
   }
 
-  function register(data: RegisterData) {
+  async function register(data: RegisterData) {
     const users = getUsers();
     if (users.find((u) => u.email.toLowerCase() === data.email.toLowerCase())) {
       return { ok: false, error: 'Este e-mail já está cadastrado.' };
@@ -111,16 +146,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: data.email,
       phone: data.phone,
       createdAt: new Date().toISOString(),
-      password: data.password,
+      passwordHash: await hashPassword(data.password),
     };
     saveUsers([...users, newUser]);
-    const { password: _pw, ...user } = newUser;
-    dispatch({ type: 'REGISTER', payload: user });
+    dispatch({ type: 'LOGIN', payload: toPublic(newUser) });
     return { ok: true };
   }
 
+  function updateProfile(data: ProfileUpdate) {
+    const current = state.user;
+    if (!current) return { ok: false, error: 'Não autenticado.' };
+    const stored = findUser(current.email);
+    if (!stored) return { ok: false, error: 'Conta não encontrada.' };
+
+    const updated: StoredUser = {
+      ...stored,
+      name: data.name?.trim() || stored.name,
+      phone: data.phone ?? stored.phone,
+      address: data.address ? { ...stored.address, ...data.address } : stored.address,
+    };
+    upsertUser(updated);
+    dispatch({ type: 'UPDATE_USER', payload: toPublic(updated) });
+    return { ok: true };
+  }
+
+  function logout() {
+    dispatch({ type: 'LOGOUT' });
+  }
+
   return (
-    <AuthContext.Provider value={{ state, login, logout, register, sendVerificationCode }}>
+    <AuthContext.Provider
+      value={{ state, checkCredentials, finishLogin, register, emailExists, updateProfile, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

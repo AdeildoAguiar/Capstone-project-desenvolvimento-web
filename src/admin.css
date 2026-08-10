@@ -1,0 +1,163 @@
+/* ── Admin dashboard ─────────────────────────────────────────────── */
+.admin-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.admin-tools { display: flex; gap: .5rem; padding-bottom: .25rem; }
+
+/* KPI cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  animation: fadeUp .4s both;
+}
+.kpi-card {
+  background: var(--paper);
+  border: 1.5px solid var(--cream-3);
+  border-radius: var(--radius-lg);
+  padding: 1.1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--spring), box-shadow var(--transition), border-color var(--transition);
+}
+.kpi-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.kpi-card__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 10px;
+  background: var(--cream-2); color: var(--amber-dark); margin-bottom: .55rem;
+}
+.kpi-card--amber .kpi-card__icon { background: rgba(200,137,58,.2); color: var(--amber-dark); }
+.kpi-card--green .kpi-card__icon { background: rgba(45,122,83,.16); color: var(--green); }
+.kpi-card__value {
+  font-family: 'Fraunces', serif; font-weight: 600;
+  font-size: 1.9rem; line-height: 1; color: var(--ink);
+}
+.kpi-card__label { font-size: .74rem; color: var(--ink-3); }
+.kpi-card--amber { border-color: rgba(200,137,58,.35); background: var(--amber-light); }
+.kpi-card--amber .kpi-card__value { color: var(--amber-dark); }
+.kpi-card--green { border-color: rgba(45,106,79,.28); background: var(--green-light); }
+.kpi-card--green .kpi-card__value { color: var(--green); }
+
+/* Panels grid */
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+.panel {
+  background: var(--paper);
+  border: 1.5px solid var(--cream-3);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  animation: fadeUp .45s both;
+  min-width: 0;
+}
+.panel--wide { grid-column: span 2; }
+.panel--table { margin-bottom: 1.5rem; }
+.panel__head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .75rem; margin-bottom: 1rem;
+}
+.panel__title {
+  font-family: 'Fraunces', serif; font-weight: 600;
+  font-size: 1.1rem; color: var(--ink); letter-spacing: -.01em;
+}
+.panel__legend { display: flex; gap: .85rem; font-size: .72rem; color: var(--ink-3); }
+.panel__legend span { display: inline-flex; align-items: center; gap: .35rem; }
+.panel__legend .dot, .dot {
+  width: 9px; height: 9px; border-radius: 3px; display: inline-block;
+}
+
+/* Segmented toggle (mês/ano) */
+.seg-toggle {
+  display: inline-flex; background: var(--cream-2);
+  border-radius: 99px; padding: 3px;
+}
+.seg-toggle button {
+  border: none; background: none; cursor: pointer;
+  font-size: .74rem; font-weight: 600; color: var(--ink-3);
+  padding: .3rem .8rem; border-radius: 99px;
+  transition: background var(--transition), color var(--transition);
+}
+.seg-toggle button.active { background: var(--paper); color: var(--ink); box-shadow: var(--shadow-sm); }
+
+/* Charts */
+.chart { width: 100%; height: auto; overflow: visible; }
+.chart-grid { stroke: var(--cream-3); stroke-width: 1; stroke-dasharray: 2 4; }
+.chart-axis { fill: var(--ink-3); font-size: 10px; }
+
+.donut-wrap { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; justify-content: center; }
+.donut { width: 160px; height: 160px; flex-shrink: 0; }
+.donut-value { fill: var(--ink); font-family: 'Fraunces', serif; font-weight: 600; font-size: 26px; }
+.donut-label { fill: var(--ink-3); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+.donut-legend { list-style: none; display: flex; flex-direction: column; gap: .55rem; }
+.donut-legend li { display: flex; align-items: center; gap: .5rem; font-size: .8rem; color: var(--ink-2); }
+.donut-legend strong { margin-left: auto; color: var(--ink); font-variant-numeric: tabular-nums; }
+.donut-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+/* Ranked bars */
+.rank-list { list-style: none; display: flex; flex-direction: column; gap: .6rem; }
+.rank-row { display: grid; grid-template-columns: 18px 1fr 1fr auto; align-items: center; gap: .6rem; }
+.rank-pos { font-size: .72rem; font-weight: 700; color: var(--ink-3); text-align: center; }
+.rank-label {
+  font-size: .82rem; color: var(--ink-2); font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rank-bar-track { height: 8px; background: var(--cream-2); border-radius: 99px; overflow: hidden; }
+.rank-bar-fill { display: block; height: 100%; border-radius: 99px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+.rank-value { font-size: .8rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; min-width: 1.5rem; text-align: right; }
+.rank-empty { font-size: .82rem; color: var(--ink-3); font-style: italic; padding: .5rem 0; }
+
+/* Activity table */
+.table-scroll { overflow-x: auto; }
+.activity-table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+.activity-table th {
+  text-align: left; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--ink-3); font-weight: 600; padding: .5rem .75rem; border-bottom: 1.5px solid var(--cream-3);
+  white-space: nowrap;
+}
+.activity-table td { padding: .7rem .75rem; border-bottom: 1px solid var(--cream-2); vertical-align: middle; }
+.activity-table tr:last-child td { border-bottom: none; }
+.activity-table td:first-child { display: flex; align-items: center; gap: .5rem; font-weight: 500; white-space: nowrap; }
+.avatar-mini {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--amber); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: .7rem; font-weight: 700; flex-shrink: 0;
+}
+.cell-strong { font-weight: 500; color: var(--ink); }
+.cell-muted { color: var(--ink-3); }
+
+.admin-footnote {
+  font-size: .75rem; color: var(--ink-3); font-style: italic;
+  text-align: center; padding: 0 0 3rem;
+}
+
+/* Navbar admin extras */
+.navbar__role {
+  font-size: .58rem; font-weight: 800; letter-spacing: .08em;
+  background: var(--ink); color: var(--cream);
+  padding: .1rem .35rem; border-radius: 4px;
+}
+.navbar__link--admin.active { background: var(--amber-light); color: var(--amber-dark); }
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 1000px) {
+  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  .admin-grid { grid-template-columns: repeat(2, 1fr); }
+  .panel--wide { grid-column: span 2; }
+}
+@media (max-width: 640px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .admin-grid { grid-template-columns: 1fr; }
+  .panel--wide { grid-column: span 1; }
+}

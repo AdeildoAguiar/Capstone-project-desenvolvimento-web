@@ -2,19 +2,20 @@ import { useNavigate } from 'react-router-dom';
 import { useLibrary } from '../context/LibraryContext';
 import { coverUrl } from '../hooks/useBookSearch';
 import { useToast, ToastContainer } from '../components/Toast';
+import Icon, { IconName } from '../components/Icon';
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function getDueInfo(dueDate: string) {
+function getDueInfo(dueDate: string): { label: string; cls: 'ok' | 'warn' | 'late'; pct: number; icon: IconName } {
   const now = Date.now();
   const due = new Date(dueDate).getTime();
   const daysLeft = Math.ceil((due - now) / 86400000);
 
-  if (daysLeft < 0)  return { label: `${Math.abs(daysLeft)}d em atraso`, cls: 'late', pct: 100 };
-  if (daysLeft <= 3) return { label: `${daysLeft}d restante${daysLeft !== 1 ? 's' : ''}`, cls: 'warn', pct: Math.max(5, (daysLeft / 14) * 100) };
-  return { label: `${daysLeft}d restantes`, cls: 'ok', pct: Math.max(5, (daysLeft / 14) * 100) };
+  if (daysLeft < 0)  return { label: `${Math.abs(daysLeft)}d em atraso`, cls: 'late', pct: 100, icon: 'alert' };
+  if (daysLeft <= 3) return { label: `${daysLeft}d restante${daysLeft !== 1 ? 's' : ''}`, cls: 'warn', pct: Math.max(5, (daysLeft / 14) * 100), icon: 'clock' };
+  return { label: `${daysLeft}d restantes`, cls: 'ok', pct: Math.max(5, (daysLeft / 14) * 100), icon: 'check-circle' };
 }
 
 export default function LoansPage() {
@@ -28,7 +29,7 @@ export default function LoansPage() {
 
   function handleReturn(bookKey: string, title: string) {
     returnBook(bookKey);
-    show('📦', `"${title.slice(0, 30)}…" devolvido!`);
+    show('return', `"${title.slice(0, 30)}…" devolvido!`);
   }
 
   return (
@@ -61,7 +62,7 @@ export default function LoansPage() {
 
         {active.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state__icon">📭</div>
+            <div className="empty-state__icon"><Icon name="inbox" size={34} /></div>
             <h3 className="empty-state__title">Nenhum empréstimo ativo</h3>
             <p className="empty-state__text">
               Explore o catálogo e empreste um livro para começar.
@@ -73,7 +74,7 @@ export default function LoansPage() {
         ) : (
           <div className="loan-list" style={{ marginBottom: '2.5rem' }}>
             {active.map((loan, i) => {
-              const { label, cls, pct } = getDueInfo(loan.dueDate);
+              const { label, cls, pct, icon } = getDueInfo(loan.dueDate);
               return (
                 <div
                   key={loan.bookKey}
@@ -87,7 +88,7 @@ export default function LoansPage() {
                   >
                     {loan.coverI
                       ? <img src={coverUrl(loan.coverI, 'S')} alt="" loading="lazy" />
-                      : <span>📖</span>
+                      : <Icon name="book" />
                     }
                   </div>
 
@@ -100,7 +101,7 @@ export default function LoansPage() {
                     </p>
                     <p className="loan-card__meta">Emprestado em {formatDate(loan.loanDate)}</p>
                     <p className={`loan-card__due loan-card__due--${cls}`}>
-                      {cls === 'late' ? '⚠️ ' : cls === 'warn' ? '⏳ ' : '✅ '}
+                      <Icon name={icon} />
                       {label} · até {formatDate(loan.dueDate)}
                     </p>
                     <div className="due-bar">
@@ -137,16 +138,16 @@ export default function LoansPage() {
                   <div className="loan-card__cover">
                     {loan.coverI
                       ? <img src={coverUrl(loan.coverI, 'S')} alt="" loading="lazy" />
-                      : <span>📖</span>
+                      : <Icon name="book" />
                     }
                   </div>
                   <div className="loan-card__info">
                     <p className="loan-card__title" style={{ cursor: 'default' }}>{loan.bookTitle}</p>
                     <p className="loan-card__meta">
-                      {formatDate(loan.loanDate)} → devolvido
+                      Devolvido em {formatDate(loan.returnedAt ?? loan.loanDate)}
                     </p>
                   </div>
-                  <span className="badge badge--available">Devolvido</span>
+                  <span className="badge badge--available"><Icon name="check" /> Devolvido</span>
                 </div>
               ))}
             </div>

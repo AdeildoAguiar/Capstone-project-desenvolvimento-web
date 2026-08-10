@@ -6,9 +6,12 @@
   background: var(--cream);
 }
 
-/* Left decorative panel */
+/* Left decorative panel — fixed dark brand look in both themes */
 .auth-panel {
-  background: var(--ink);
+  background:
+    radial-gradient(120% 80% at 80% 0%, rgba(230,169,79,.22), transparent 55%),
+    radial-gradient(90% 70% at 0% 100%, rgba(156,95,28,.25), transparent 55%),
+    linear-gradient(155deg, #251a0f 0%, #16110b 60%, #100c07 100%);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -19,51 +22,38 @@
 .auth-panel::before {
   content: '';
   position: absolute;
-  top: -120px; right: -120px;
-  width: 400px; height: 400px;
+  top: -140px; right: -120px;
+  width: 420px; height: 420px;
   border-radius: 50%;
-  background: rgba(200,137,58,.12);
+  background: radial-gradient(circle, rgba(230,169,79,.18), transparent 70%);
 }
 .auth-panel::after {
   content: '';
   position: absolute;
-  bottom: -80px; left: -80px;
-  width: 300px; height: 300px;
+  bottom: -120px; left: -90px;
+  width: 340px; height: 340px;
   border-radius: 50%;
-  background: rgba(200,137,58,.08);
+  border: 1px solid rgba(230,169,79,.14);
 }
 .auth-panel__brand {
-  display: flex;
-  align-items: center;
-  gap: .65rem;
-  color: var(--cream);
-  font-family: 'DM Serif Display', serif;
-  font-size: 1.35rem;
-  letter-spacing: -.01em;
   position: relative;
   z-index: 1;
 }
-.auth-panel__brand-icon {
-  width: 36px; height: 36px;
-  background: var(--amber);
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1rem;
-}
+.auth-panel__brand .brand-logo__word { color: #faf4ea; }
 .auth-panel__content {
   position: relative;
   z-index: 1;
 }
 .auth-panel__title {
-  font-family: 'DM Serif Display', serif;
-  font-size: clamp(2rem, 3.5vw, 2.8rem);
-  color: var(--cream);
-  line-height: 1.2;
+  font-family: 'Fraunces', serif; font-weight: 600;
+  font-size: clamp(2rem, 3.5vw, 2.85rem);
+  color: #faf4ea;
+  line-height: 1.15;
   letter-spacing: -.02em;
   margin-bottom: 1rem;
 }
 .auth-panel__title em {
-  color: var(--amber);
+  color: #e6a94f;
   font-style: italic;
 }
 .auth-panel__desc {
@@ -117,7 +107,7 @@
   margin-bottom: .6rem;
 }
 .auth-form-box__title {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'Fraunces', serif; font-weight: 600;
   font-size: 1.8rem;
   color: var(--ink);
   letter-spacing: -.02em;
@@ -321,7 +311,7 @@
   width: 48px; height: 56px;
   border: 1.5px solid var(--cream-3);
   border-radius: var(--radius);
-  font-family: 'DM Serif Display', serif;
+  font-family: 'Fraunces', serif; font-weight: 600;
   font-size: 1.4rem;
   text-align: center;
   background: var(--paper);
@@ -404,12 +394,64 @@
   display: block;
 }
 .auth-success__title {
-  font-family: 'DM Serif Display', serif;
+  font-family: 'Fraunces', serif; font-weight: 600;
   font-size: 1.6rem;
   color: var(--ink);
   margin-bottom: .5rem;
 }
 .auth-success__text { font-size: .9rem; color: var(--ink-3); }
+
+/* Input leading icons now hold SVGs */
+.auth-input-icon { color: var(--ink-3); display: flex; }
+.auth-input-icon svg { width: 17px; height: 17px; }
+
+/* Password visibility toggle */
+.auth-pw-toggle {
+  position: absolute; right: .85rem; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  color: var(--ink-3); display: flex;
+}
+.auth-pw-toggle svg { width: 18px; height: 18px; }
+
+/* Country-code pill (replaces flag emoji) */
+.auth-phone-cc {
+  font-weight: 700; font-size: .7rem; letter-spacing: .03em;
+  background: var(--cream-3); color: var(--ink-2);
+  padding: .12rem .4rem; border-radius: 5px;
+}
+
+/* Icons inside verify banner / eyebrows / errors */
+.verify-info__head { display: flex; align-items: center; gap: .45rem; font-weight: 700; margin-bottom: .3rem; }
+.verify-info__head svg { width: 17px; height: 17px; }
+.auth-error svg { width: 16px; height: 16px; flex-shrink: 0; }
+.auth-form-box__eyebrow { display: inline-flex; align-items: center; gap: .4rem; }
+.auth-form-box__eyebrow svg { width: 14px; height: 14px; }
+.auth-2fa-note { display: flex; align-items: center; gap: .5rem; justify-content: center; }
+.auth-2fa-note svg { width: 16px; height: 16px; flex-shrink: 0; }
+.auth-success__icon-wrap {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 68px; height: 68px; border-radius: 50%;
+  background: var(--green-light); color: var(--green); margin-bottom: 1rem;
+}
+.auth-success__icon-wrap svg { width: 34px; height: 34px; }
+
+/* 2FA helper note under the login divider */
+.auth-2fa-note {
+  font-size: .8rem; color: var(--ink-3); line-height: 1.6;
+  background: var(--cream-2); border-radius: var(--radius);
+  padding: .75rem .9rem; text-align: center;
+}
+
+/* Resend row */
+.auth-resend-row { text-align: center; margin: .5rem 0 1rem; font-size: .82rem; color: var(--ink-3); }
+
+/* Delivered variant of the verify banner (real e-mail sent) */
+.verify-info--sent {
+  background: var(--green-light);
+  border-color: rgba(45,106,79,.25);
+  color: var(--green);
+}
 
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 768px) {

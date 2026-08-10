@@ -76,3 +76,15 @@ export async function fetchBookDetail(workKey: string) {
   if (!res.ok) throw new Error('Livro não encontrado');
   return res.json();
 }
+
+/** Resolves an Open Library author key (e.g. "/authors/OL..A") to a name. */
+export async function fetchAuthorName(authorKey: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${BASE}${authorKey}.json`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return typeof data?.name === 'string' ? data.name : null;
+  } catch {
+    return null;
+  }
+}

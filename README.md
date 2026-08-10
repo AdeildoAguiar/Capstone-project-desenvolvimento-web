@@ -8,13 +8,46 @@ Uma Aplicação de Página Única (SPA) para gerenciar e explorar o acervo de um
 
 ## ✨ Funcionalidades
 
+- 🔐 **Login em 2 etapas (2FA)**: senha + código de uso único enviado por e-mail
+- 📧 **Envio real de e-mail** via API serverless (Resend) — com modo demonstração automático
+- 🔒 **Senhas com hash** (PBKDF2 / Web Crypto) — nada é salvo em texto puro
+- 📊 **Painel administrativo** com gráficos de uso, autores mais lidos (mês/ano), situação dos livros e atividade dos usuários
 - 🔍 Busca e filtragem por título, autor, gênero e ordenação
 - 📖 Página de detalhes com capa, descrição e categorias
 - 📤 Sistema de empréstimo com prazo de 14 dias e alerta de atraso
-- ⭐ Lista de desejos persistente
-- 📋 Rastreador de status de leitura (Lendo / Concluído / Quero ler)
-- 💾 Dados persistidos via localStorage
+- ⭐ Lista de desejos persistente e status de leitura
+- 👤 **Perfil do usuário** (`/profile`): ver e editar nome, celular e endereço, com **auto-preenchimento por CEP** (ViaCEP)
+- 🌗 **Tema claro/escuro** (automático + alternância manual)
 - 📱 Design responsivo mobile-first
+
+## 🔐 Segurança & Autenticação
+
+O fluxo de login tem **duas etapas**:
+
+1. E-mail + senha → a senha é verificada contra um hash **PBKDF2** (150k iterações, salt aleatório).
+2. Um **código de 6 dígitos** é enviado ao e-mail. Ele é verificado por um **token assinado (HMAC)** gerado no servidor — o código nunca é armazenado, e o token não pode ser adulterado nem revela o código.
+
+As funções serverless ficam em [`/api`](api/):
+
+| Rota | Função |
+|---|---|
+| `POST /api/send-code` | Gera o código, envia por e-mail (Resend) e retorna o token assinado |
+| `POST /api/verify-code` | Valida o código contra o token (assinatura, expiração e hash) |
+
+> **Sem `RESEND_API_KEY` configurada**, o app entra em **modo demonstração**: todo o fluxo funciona e o código aparece na tela (ideal para `npm run dev` e para avaliar sem configurar e-mail).
+
+## 📊 Painel Administrativo
+
+Qualquer conta cujo e-mail seja igual a `VITE_ADMIN_EMAIL` recebe o papel **admin** e o link **Painel** (`/admin`), com:
+
+- Indicadores (empréstimos, ativos, devoluções, leitores, taxa de devolução)
+- Gráfico de **empréstimos por mês** (SVG, sem bibliotecas externas)
+- **Autores mais lidos** — alternável entre mês e ano
+- Rosca de **situação dos livros**, gêneros/livros/leitores em destaque
+- Tabela de **atividade recente dos usuários**
+- Botão para **popular com dados de exemplo** (demonstração)
+
+As métricas vêm de um log de eventos no dispositivo; em produção viriam de um banco compartilhado.
 
 ## 🛠 Stack Tecnológico
 
@@ -24,10 +57,24 @@ Uma Aplicação de Página Única (SPA) para gerenciar e explorar o acervo de um
 | Framework | React 18 |
 | Estado | React Context API + useReducer |
 | Roteamento | React Router DOM v6 |
-| API | Open Library (Fetch API, sem chave) |
+| Catálogo | Open Library (Fetch API, sem chave) |
+| Autenticação | 2FA por e-mail · PBKDF2 (Web Crypto) · token HMAC |
+| Backend | Funções serverless (Vercel) + Resend |
+| Gráficos | SVG puro (sem dependências) |
 | Persistência | localStorage |
 | Build | Vite 5 |
-| Deploy | Vercel / Netlify |
+| Deploy | Vercel (recomendado, para `/api`) |
+
+### ⚙️ Variáveis de ambiente
+
+Copie `.env.example` para `.env` (local) e configure no painel do Vercel (produção):
+
+| Variável | Escopo | Descrição |
+|---|---|---|
+| `VITE_ADMIN_EMAIL` | client | E-mail que vira admin automaticamente |
+| `AUTH_SECRET` | servidor | Segredo para assinar os tokens OTP |
+| `RESEND_API_KEY` | servidor | Chave do [Resend](https://resend.com) — ativa o envio real |
+| `EMAIL_FROM` | servidor | Remetente (ex.: `onboarding@resend.dev`) |
 
 ---
 
